@@ -134,7 +134,12 @@ services:
   producer:
     build: ../real-time/producer/
     container_name: kafka_producer
+    privileged: true
     restart: on-failure
+    depends_on:
+      - kafka1
+    network_mode: host
+    
 
 
 volumes:
