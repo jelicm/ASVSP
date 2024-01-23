@@ -10,7 +10,7 @@ services:
     environment:
       - CLUSTER_NAME=test
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
     ports:
       - 9870:9870
       - 9000:9000
@@ -23,7 +23,7 @@ services:
     volumes:
       - hadoop_datanode1:/hadoop/dfs/data
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
 
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
@@ -33,7 +33,7 @@ services:
     volumes:
       - hadoop_datanode2:/hadoop/dfs/data
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
 
   spark-master:
     image: bde2020/spark-master:3.0.1-hadoop3.2
@@ -44,7 +44,7 @@ services:
     environment: 
       - PYSPARK_PYTHON=python3
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
 
   spark-worker1:
     image: bde2020/spark-worker:3.0.1-hadoop3.2
@@ -56,7 +56,7 @@ services:
     ports:
       - 8081:8081
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
   
   spark-worker2:
     image: bde2020/spark-worker:3.0.1-hadoop3.2
@@ -68,7 +68,33 @@ services:
     ports:
       - 8082:8081
     env_file:
-      - ./hadoop.env
+      - ./envfile.env
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+  
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    env_file:
+      - ./envfile.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 datanode2:9864 hive-metastore-postgresql:5432"
+    ports:
+      - "9083:9083"
+  
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    container_name: hive-metastore-postgresql
   
   hue:
     image: gethue/hue:20201111-135001
@@ -98,6 +124,7 @@ services:
   kafka1:
     image: confluentinc/cp-kafka:5.5.12
     container_name: kafka1
+    restart: on-failure
     ports:
       - "9092:9092"
     environment:
@@ -113,23 +140,6 @@ services:
     depends_on:
       - zoo1
 
-  kafka2:
-    image: confluentinc/cp-kafka:5.5.12
-    container_name: kafka2
-    ports:
-      - "9093:9093"
-    environment:
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka2:19093,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
-      KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
-      KAFKA_BROKER_ID: 2
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
-    volumes:
-      - kafka2:/var/lib/kafka/data
-    depends_on:
-      - zoo1
 
   producer:
     build: ../real-time/producer/
@@ -138,7 +148,7 @@ services:
     restart: on-failure
     depends_on:
       - kafka1
-    network_mode: host
+    #network_mode: host
     
 
 

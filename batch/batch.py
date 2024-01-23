@@ -16,7 +16,6 @@ spark = SparkSession(sc)
 
 quiet_logs(spark)
 
-from pyspark.sql.types import *
 
 schemaString = "flow_key src_ip_numeric src_ip src_port dst_ip dst_port proto pktTotalCount \
     octetTotalCount min_ps max_ps avg_ps std_dev_ps flowStart flowEnd flowDuration min_piat \
