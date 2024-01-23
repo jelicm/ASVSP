@@ -10,7 +10,7 @@ def quiet_logs(sc):
   logger.LogManager.getLogger("org"). setLevel(logger.Level.ERROR)
   logger.LogManager.getLogger("akka").setLevel(logger.Level.ERROR)
 
-conf = SparkConf().setAppName("uni").setMaster("spark://spark-master:7077") #local
+conf = SparkConf().setAppName("uni").setMaster("spark://spark-master:7077") 
 conf.set("hive.metastore.uris", HIVE_METASTORE_URIS)
 
 spark = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()             
@@ -37,10 +37,8 @@ df = df.drop(*columns_to_drop)
 df.printSchema()
 
 
-hive_table_name = "clean_data"
-
-
-df.write.mode("overwrite").saveAsTable(hive_table_name)
+spark.sql("DROP TABLE IF EXISTS cleaned_data")
+df.write.mode("overwrite").saveAsTable("cleaned_data")
 
 
 print("Preprocessing is finished and saved to table!")
