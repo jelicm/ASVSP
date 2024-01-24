@@ -19,6 +19,7 @@ rez = spark \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka1:19092") \
     .option("subscribe", "network-data") \
+    .option("startingOffsets", "earliest") \
     .load()
 
 rez = rez.selectExpr("CAST(value AS STRING) as value")
@@ -26,8 +27,10 @@ rez = rez.selectExpr("CAST(value AS STRING) as value")
 query = rez \
     .writeStream \
     .outputMode("append") \
+    .trigger(processingTime='10 seconds') \
     .format("console") \
     .option("truncate", "false") \
     .start()
+
 
 query.awaitTermination()

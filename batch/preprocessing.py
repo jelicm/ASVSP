@@ -1,6 +1,7 @@
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
+from pyspark.sql.functions import from_unixtime, date_format, col
 import os
 
 HIVE_METASTORE_URIS = os.environ["HIVE_SITE_CONF_hive_metastore_uris"]
@@ -20,10 +21,10 @@ quiet_logs(spark)
 
 hdfs_csv_path = "hdfs://namenode:9000/data/data.csv"
 
-# Read CSV into a DataFrame
+
 df = spark.read.csv(hdfs_csv_path, header=True, inferSchema=True)
 
-# List of columns to drop
+
 columns_to_drop = [ "std_dev_piat", "f_pktTotalCount",
                     "f_octetTotalCount", "f_min_ps", "f_max_ps", "f_avg_ps", "f_std_dev_ps",
                     "f_flowStart", "f_flowEnd", "f_flowDuration", "f_min_piat", "f_max_piat",
@@ -34,7 +35,17 @@ columns_to_drop = [ "std_dev_piat", "f_pktTotalCount",
 
 df = df.drop(*columns_to_drop)
 
+df = df.withColumn("start_timestamp_column", from_unixtime(col("flowStart")))
+
+df = df.withColumn("end_timestamp_column", from_unixtime(col("flowEnd")))
+
+df = df.withColumn("start_year", date_format(col("start_timestamp_column"), "yyyy"))
+df = df.withColumn("start_month", date_format(col("start_timestamp_column"), "MM"))
+df = df.withColumn("start_day_of_month", date_format(col("start_timestamp_column"), "d")) 
+df = df.withColumn("start_hour_of_day", date_format(col("start_timestamp_column"), "H"))
+
 df.printSchema()
+df.show(5, False)
 
 
 spark.sql("DROP TABLE IF EXISTS cleaned_data")
