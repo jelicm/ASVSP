@@ -50,7 +50,7 @@ df.show(5, False)
 
 
 spark.sql("DROP TABLE IF EXISTS cleaned_data")
-df.write.mode("overwrite").saveAsTable("cleaned_data")
+df.write.mode("overwrite").saveAsTable("cleaned_data1")
 
 
 print("Preprocessing is finished and saved to table!")
