@@ -19,7 +19,7 @@ spark = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
 
 quiet_logs(spark)
 
-hive_table_name = "cleaned_data1"
+hive_table_name = "cleaned_data"
 
 df = spark.table(hive_table_name)
 
